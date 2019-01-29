@@ -10,6 +10,8 @@ class Roi : public Piece{
 				_val=6;
 			else
 				_val=16;
+
+			first=0;
 		}
 		virtual int occupated(int nx, int ny, int **screen);
 		virtual void deplacement(int nx, int ny, int **screen);
@@ -18,5 +20,5 @@ class Roi : public Piece{
 
 	private:
 		int _val;
-		
+		bool first;
 };

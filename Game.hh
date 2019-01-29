@@ -53,15 +53,15 @@ class Game{
 
 	private:
 		int _width,_height;		//Dimensions de l'écran
-		SDL_Rect src, dest;
+		SDL_Rect src, dest, destSelect;
 
 		string fichier;
 		const char * fichierc;
 
 		SDL_Window *window;
 		int **screen;		//Informations relatives à l'écran
-		int x,y,nx,ny;
-		bool select;
+		int x,y,nx,ny,xp,yp;
+		bool select,promotion,cprom;
 		int iter,tour,winner;
 
 		bool isRunning;		//Indique si le jeu est toujours en cours	 
@@ -78,6 +78,7 @@ class Game{
 		SDL_Texture* tourB;
 		SDL_Texture* roiB;
 		SDL_Texture* reineB; 
+		SDL_Texture* sel; 
 
 		list <Piece *> listePiece;
 

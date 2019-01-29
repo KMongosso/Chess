@@ -103,6 +103,7 @@ Game::Game(const char* title, int x, int y, int width, int height){
 
 	src.x = src.y = src.w = src.h =0;
 	dest.w=dest.h=80;
+	destSelect.w=destSelect.h=80;
 
 	roiN = TextureManager::LoadTexture("Images/RoN.png");
 	reineN = TextureManager::LoadTexture("Images/ReN.png");
@@ -116,6 +117,7 @@ Game::Game(const char* title, int x, int y, int width, int height){
 	tourB = TextureManager::LoadTexture("Images/TB.png");
 	pionB = TextureManager::LoadTexture("Images/PB.png");
 	cavB = TextureManager::LoadTexture("Images/CB.png");
+	sel = TextureManager::LoadTexture("Images/sel.png");
 	
 	select=0;
 	iter=0;
@@ -131,6 +133,7 @@ Game::Game(const char* title, int x, int y, int width, int height){
 	tex = SDL_CreateTextureFromSurface(renderer,text);
 
 	tour = 2;
+	promotion=0;
 }
 
 
@@ -869,111 +872,232 @@ bool Game::save2(Piece *roi){
 /*Met à jour le jeu*/
 void Game::update(){
 	if(winner==0){
-		if(iter>5){
-			if(Game::event.type == SDL_MOUSEBUTTONDOWN){
-				if(event.button.x>0 && event.button.x<640 && event.button.y<690 && event.button.y>50){
-					if(!select){
-						cout << "Sélection d'une pièce" << endl;
-						y=(event.button.y-50)/80;
-						x=event.button.x/80;
-						select=1;
-					}
-					else{
-						cout << "Mouvement d'une pièce" << endl;
-						ny=(event.button.y-50)/80;
-						nx=event.button.x/80;
-						
-						if(tour==1){
-							if(screen[y][x]==1 || screen[y][x]==2 || screen[y][x]==3 || screen[y][x]==4 || screen[y][x]==5 || screen[y][x]==6){
-								for(list <Piece *>::iterator it = listePiece.begin(); it != listePiece.end(); it ++){
-									if((*it)->getX()==x && (*it)->getY()==y){
-
-										if((*it)->allowed(nx,ny,screen) && (nx!=(*it)->getX() || ny!=(*it)->getY())){
-											for(list <Piece *>::iterator it2 = listePiece.begin(); it2 != listePiece.end(); it2 ++){
-												if((*it2)->getVal()==6){
-													cout << "Echec1 = " << (*this).echec((*it2),(*it)->getX(),(*it)->getY(),nx,ny,(*it)->getVal(),screen) << endl;
-													cout << "Echec2 = " << (*this).echec2((*it2),nx,ny,(*it)->getVal()) << endl;
-													if((*this).echec((*it2),(*it)->getX(),(*it)->getY(),nx,ny,(*it)->getVal(),screen)==0 || (*this).echec2((*it2),nx,ny,(*it)->getVal())==0){
-														for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
-															if((*it1)->getX()==nx && (*it1)->getY()==ny){
-																listePiece.remove(*it1);
-																break;
-															}
-														}
-														(*it)->deplacement(nx,ny,screen);
-														fichierc= "Turn : White";
-														SDL_FreeSurface(text);
-														text = TTF_RenderText_Blended(police,fichierc, {255, 255, 255});
-														tex = SDL_CreateTextureFromSurface(renderer,text);
-														tour=2;
-														break;
-													}
-													
-												}
-											}		
-										}	
-										break;
-									}
-
-								}
-							}
+		if(promotion==0){
+			if(iter>5){
+				if(Game::event.type == SDL_MOUSEBUTTONDOWN){
+					if(event.button.x>0 && event.button.x<640 && event.button.y<690 && event.button.y>50){
+						if(!select){
+							y=(event.button.y-50)/80;
+							x=event.button.x/80;
+							destSelect.x = x*destSelect.w;
+							destSelect.y = 50+y*destSelect.h;
+							select=1;
 						}
 						else{
-							if(screen[y][x]==11 || screen[y][x]==12 || screen[y][x]==13 || screen[y][x]==14 || screen[y][x]==15 || screen[y][x]==16){
-								for(list <Piece *>::iterator it = listePiece.begin(); it != listePiece.end(); it ++){
-									if((*it)->getX()==x && (*it)->getY()==y){
+							ny=(event.button.y-50)/80;
+							nx=event.button.x/80;
+							
+							if(tour==1){
+								if(screen[y][x]==1 || screen[y][x]==2 || screen[y][x]==3 || screen[y][x]==4 || screen[y][x]==5 || screen[y][x]==6){
+									for(list <Piece *>::iterator it = listePiece.begin(); it != listePiece.end(); it ++){
+										if((*it)->getX()==x && (*it)->getY()==y){
 
-										if((*it)->allowed(nx,ny,screen) && (nx!=(*it)->getX() || ny!=(*it)->getY())){
-											for(list <Piece *>::iterator it2 = listePiece.begin(); it2 != listePiece.end(); it2 ++){
-												if((*it2)->getVal()==16){
-													cout << "Echec1 = " << (*this).echec((*it2),(*it)->getX(),(*it)->getY(),nx,ny,(*it)->getVal(),screen) << endl;
-													cout << "Echec2 = " << (*this).echec2((*it2),nx,ny,(*it)->getVal()) << endl;
-													if((*this).echec((*it2),(*it)->getX(),(*it)->getY(),nx,ny,(*it)->getVal(),screen)==0 || (*this).echec2((*it2),nx,ny,(*it)->getVal())==0){
-														for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
-															if((*it1)->getX()==nx && (*it1)->getY()==ny){
-																listePiece.remove(*it1);
-																break;
+											if((*it)->allowed(nx,ny,screen) && (nx!=(*it)->getX() || ny!=(*it)->getY())){
+												for(list <Piece *>::iterator it2 = listePiece.begin(); it2 != listePiece.end(); it2 ++){
+													if((*it2)->getVal()==6){
+														if((*this).echec((*it2),(*it)->getX(),(*it)->getY(),nx,ny,(*it)->getVal(),screen)==0 || (*this).echec2((*it2),nx,ny,(*it)->getVal())==0){
+															for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+																if((*it1)->getX()==nx && (*it1)->getY()==ny){
+																	listePiece.remove(*it1);
+																	break;
+																}
 															}
+															(*it)->deplacement(nx,ny,screen);
+															fichierc= "Turn : White";
+															SDL_FreeSurface(text);
+															text = TTF_RenderText_Blended(police,fichierc, {255, 255, 255});
+															tex = SDL_CreateTextureFromSurface(renderer,text);
+															tour=2;
+															break;
 														}
-														(*it)->deplacement(nx,ny,screen);
 														
-														fichierc= "Turn : Black";
-														SDL_FreeSurface(text);
-														text = TTF_RenderText_Blended(police,fichierc, {255, 255, 255});
-														tex = SDL_CreateTextureFromSurface(renderer,text);
-														tour=1;
-														break;
+													}
+												}		
+											}	
+											break;
+										}
+
+									}
+								}
+							}
+							else{
+								if(screen[y][x]==11 || screen[y][x]==12 || screen[y][x]==13 || screen[y][x]==14 || screen[y][x]==15 || screen[y][x]==16){
+									for(list <Piece *>::iterator it = listePiece.begin(); it != listePiece.end(); it ++){
+										if((*it)->getX()==x && (*it)->getY()==y){
+
+											if((*it)->allowed(nx,ny,screen) && (nx!=(*it)->getX() || ny!=(*it)->getY())){
+												for(list <Piece *>::iterator it2 = listePiece.begin(); it2 != listePiece.end(); it2 ++){
+													if((*it2)->getVal()==16){
+														if((*this).echec((*it2),(*it)->getX(),(*it)->getY(),nx,ny,(*it)->getVal(),screen)==0 || (*this).echec2((*it2),nx,ny,(*it)->getVal())==0){
+															for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+																if((*it1)->getX()==nx && (*it1)->getY()==ny){
+																	listePiece.remove(*it1);
+																	break;
+																}
+															}
+															(*it)->deplacement(nx,ny,screen);
+															
+															fichierc= "Turn : Black";
+															SDL_FreeSurface(text);
+															text = TTF_RenderText_Blended(police,fichierc, {255, 255, 255});
+															tex = SDL_CreateTextureFromSurface(renderer,text);
+															tour=1;
+															break;
+														}
 													}
 												}
 											}
+											break;	
 										}
-										break;	
 									}
 								}
 							}
+							select=0;
 						}
-						select=0;
+					}
+					iter=0;
+				}	
+				
+			}
+			iter++;
+
+			for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+				if(((*it1)->getVal()==6 || (*it1)->getVal()==16) && (*this).echecmat((*it1))==1 ){
+					if((*this).save2(*it1)==0 && (*this).save(*it1)==0){
+						if((*it1)->getVal()==6)
+							fichierc= "White win";
+						else
+							fichierc= "Black win ";
+
+						destText = {120,285,400,100};
+						SDL_FreeSurface(text);
+						text = TTF_RenderText_Blended(police,fichierc, {0, 0, 0});
+						tex = SDL_CreateTextureFromSurface(renderer,text);
+						winner=1;
 					}
 				}
-				iter=0;
-			}	
-			
-		}
-		iter++;
+			}
 
-		for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
-			if(((*it1)->getVal()==6 || (*it1)->getVal()==16) && (*this).echecmat((*it1))==1 ){
-				if((*this).save2(*it1)==0 && (*this).save(*it1)==0){
-					if((*it1)->getVal()==6)
-						fichierc= "White win";
+			for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+				if(((*it1)->getY()==0 || (*it1)->getY()==7) && ((*it1)->getVal()==1 || (*it1)->getVal()==11)){
+					cout << "Pion promotion" << endl;
+					promotion=1;
+					xp=(*it1)->getX();
+					yp=(*it1)->getY();
+
+					if((*it1)->getY()==0)
+						cprom=1;
 					else
-						fichierc= "Black win ";
+						cprom=0;
 
-					destText = {120,285,400,100};
+					fichierc= " You can promote your spawn what is you choice ? ";
+
+					destText = {80,80,520,30};
 					SDL_FreeSurface(text);
-					text = TTF_RenderText_Blended(police,fichierc, {0, 0, 0});
+					text = TTF_RenderText_Blended(police,fichierc, {255, 255, 255});
 					tex = SDL_CreateTextureFromSurface(renderer,text);
-					winner=1;
+				}
+			}
+		}
+
+		else{
+			if(Game::event.type == SDL_MOUSEBUTTONDOWN){
+				if(event.button.x>(50+120) && event.button.x<280 && event.button.y<320 && event.button.y>160){
+					for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+						if((*it1)->getX()==xp && (*it1)->getY()==yp){
+							listePiece.remove(*it1);
+							break;
+						}
+					}
+			
+					if(cprom){
+						listePiece.push_back(new Cavalier(xp,yp,1));
+						screen[yp][xp]=13;
+					}
+					else{
+						listePiece.push_back(new Cavalier(xp,yp,0));
+						screen[yp][xp]=3;
+					}
+
+					promotion=0;
+				}
+
+				if(event.button.x>(50+120) && event.button.x<280 && event.button.y<480 && event.button.y>320){
+					for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+						if((*it1)->getX()==xp && (*it1)->getY()==yp){
+							listePiece.remove(*it1);
+							break;
+						}
+					}
+
+					if(cprom){
+						listePiece.push_back(new Reine(xp,yp,1));
+						screen[yp][xp]=15;
+					}
+					else{
+						listePiece.push_back(new Reine(xp,yp,0));
+						screen[yp][xp]=5;
+					}
+					promotion=0;
+				}
+
+				if(event.button.x>(50+280) && event.button.x<440 && event.button.y<320 && event.button.y>160){
+					for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+						if((*it1)->getX()==xp && (*it1)->getY()==yp){
+							listePiece.remove(*it1);
+							break;
+						}
+					}
+
+					if(cprom){
+						listePiece.push_back(new Fou(xp,yp,1));
+						screen[yp][xp]=14;
+					}
+					else{
+						listePiece.push_back(new Fou(xp,yp,0));
+						screen[yp][xp]=4;
+					}
+					promotion=0;
+				}
+
+				if(event.button.x>(50+280) && event.button.x<440 && event.button.y<480 && event.button.y>320){
+					for(list <Piece *>::iterator it1 = listePiece.begin(); it1 != listePiece.end(); it1 ++){
+						if((*it1)->getX()==xp && (*it1)->getY()==yp){
+							listePiece.remove(*it1);
+							break;
+						}
+					}
+
+					if(cprom){
+						listePiece.push_back(new Tour(xp,yp,1));
+						screen[yp][xp]=12;
+					}
+					else{
+						listePiece.push_back(new Tour(xp,yp,0));
+						screen[yp][xp]=2;
+					}
+
+					promotion=0;
+				}
+
+				if(promotion==0 && cprom){
+					dest.w=dest.h=80;
+					destText = {15,15,200,20};
+					fichierc= "Turn : Black";
+					SDL_FreeSurface(text);
+					text = TTF_RenderText_Blended(police,fichierc, {255, 255, 255});
+					tex = SDL_CreateTextureFromSurface(renderer,text);
+					tour=1;
+				}
+
+				if(promotion==0 && !cprom ){
+					dest.w=dest.h=80;
+					destText = {15,15,200,20};
+					fichierc= "Turn : White";
+					SDL_FreeSurface(text);
+					text = TTF_RenderText_Blended(police,fichierc, {255, 255, 255});
+					tex = SDL_CreateTextureFromSurface(renderer,text);
+					tour=2;
 				}
 			}
 		}
@@ -983,11 +1107,41 @@ void Game::update(){
 
 /*Ajoute toutes les textures sur le render*/
 void Game::render(){
+
 	SDL_RenderClear(renderer);
 
 	if(winner==0){
-		carte->Draw();
-		draw();
+		if(promotion==0){
+			carte->Draw();
+			if(select){
+				TextureManager::Draw(sel,src,destSelect);
+			}
+			draw();
+		}
+		else{
+			if(cprom){
+				dest={50+120,160,160,160};
+				TextureManager::Draw(cavB,src,dest);
+				dest={50+120,320,160,160};
+				TextureManager::Draw(reineB,src,dest);
+				dest={50+280,160,160,160};
+				TextureManager::Draw(fouB,src,dest);
+				dest={50+280,320,160,160};
+				TextureManager::Draw(tourB,src,dest);
+			}
+			else{
+				dest={50+120,160,160,160};
+				TextureManager::Draw(cavN,src,dest);
+				dest={50+120,320,160,160};
+				TextureManager::Draw(reineN,src,dest);
+				dest={50+280,160,160,160};
+				TextureManager::Draw(fouN,src,dest);
+				dest={50+280,320,160,160};
+				TextureManager::Draw(tourN,src,dest);
+			}
+				
+		}
+		
 	}
 	else{
 		carte->Draw();

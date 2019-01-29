@@ -11,6 +11,8 @@ void Roi::deplacement(int nx, int ny, int **screen){
 	_x=nx;
 	_y=ny;
 	screen[_y][_x]=_val;
+
+	first = 1;
 }
 
 bool Roi::allowed(int nx, int ny, int **screen){
